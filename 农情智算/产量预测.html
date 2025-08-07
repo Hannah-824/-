@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农业大数据系统 - 产量预测</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 基础样式 - 与登录页面保持一致 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4f0e8 100%);
+            min-height: 100vh;
+            background-image: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: overlay;
+        }
+          /* 顶部导航栏 */
+        .top-nav {
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+         /* 主内容容器 */
+        .main-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        /* 页面标题 */
+        .page-header {
+            background: linear-gradient(to right, rgba(76, 175, 80, 0.9), rgba(139, 195, 74, 0.9));
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: -1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .page-header p {
+            font-size: 14px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+          .page-header::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://cdn-icons-png.flaticon.com/512/3069/3069172.png');
+            background-size: 120px;
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            opacity: 0.1;
+        }
+        
+        /* 内容卡片 */
+        .content-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 0 0 12px 12px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        /* 预测控制面板 */
+        .prediction-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            background-color: rgba(233, 246, 234, 0.7);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2E7D32;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .control-group select, 
+        .control-group input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .control-group select:focus, 
+        .control-group input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            outline: none;
+        }
+         /* 预测按钮 */
+        .predict-btn {
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+        }
+        
+        .predict-btn:hover {
+            background: linear-gradient(to right, #3e8e41, #689F38);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .predict-btn i {
+            margin-right: 8px;
+        }
+         /* 预测结果 */
+        .prediction-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .result-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid #4CAF50;
+        }
+        
+        .result-title {
+            font-size: 16px;
+            color: #2E7D32;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .result-title i {
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+        
+        .result-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin: 10px 0;
+        }
+        .result-comparison {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+        
+        .result-comparison.positive {
+            color: #4CAF50;
+        }
+        
+        .result-comparison.negative {
+            color: #f44336;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            height: 400px;
+            background-color: white;
+            border-radius: 8px;
+            margin-top: 30px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            color: #999;
+            font-size: 18px;
+            border: 1px solid #ddd;
+        }
+         .analysis-note {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .prediction-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .prediction-results {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="top-nav">
+        <div class="logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" alt="农业大数据">
+            <h1>农业大数据系统</h1>
+        </div>
+        <div class="user-profile">
+            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="用户头像">
+            <span>管理员</span>
+        </div>
+    </nav>
+    
+     <!-- 主内容 -->
+    <div class="main-container">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1>农作物产量预测分析</h1>
+            <p>基于历史数据和当前生长状况的智能产量预测</p >
+        </div>
+        
+        <!-- 内容卡片 -->
+        <div class="content-card">
+            <!-- 预测控制面板 -->
+            <div class="prediction-controls">
+                <div class="control-group">
+                    <label for="crop-type">作物类型</label>
+                    <select id="crop-type">
+                        <option value="wheat">小麦</option>
+                        <option value="corn">玉米</option>
+                        <option value="rice">水稻</option>
+                        <option value="soybean">大豆</option>
+                    </select>
+                </div>
+
+                 <div class="control-group">
+                    <label for="region">区域选择</label>
+                    <select id="region">
+                        <option value="all">全部区域</option>
+                        <option value="north">北部种植区</option>
+                        <option value="south">南部种植区</option>
+                        <option value="east">东部种植区</option>
+                        <option value="west">西部种植区</option>
+                    </select>
+                </div>
+
+                 <div class="control-group">
+                    <label for="model">预测模型</label>
+                    <select id="model">
+                        <option value="ai">AI智能预测</option>
+                        <option value="historical">历史数据模型</option>
+                        <option value="combined">综合预测模型</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="date-range">时间范围</label>
+                    <input type="text" id="date-range" placeholder="选择日期范围" onfocus="(this.type='date')">
+                </div>
+            </div>
+
+            <!-- 预测按钮 -->
+            <button class="predict-btn">
+                <i class="fas fa-calculator"></i> 开始产量预测
+            </button>
+            
+  <!-- 预测结果 -->
+            <div class="prediction-results">
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-seedling"></i> 预测总产量
+                    </div>
+                    <div class="result-value">12,568 吨</div>
+                    <div class="result-comparison positive">
+                        <i class="fas fa-caret-up"></i> 比去年增加 8.5%
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-chart-line"></i> 单位面积产量
+                    </div>
+                    <div class="result-value">6.8 吨/公顷</div>
+                    <div class="result-comparison positive">
+                        <i class="fas fa-caret-up"></i> 比去年增加 3.2%
+                    </div>
+                </div>
+             
+                 <div class="result-card">
+                    <div class="result-title">
+                        <i class="fas fa-calendar-alt"></i> 最佳收获期
+                    </div>
+                    <div class="result-value">10月15日-25日</div>
+                    <div class="result-comparison">
+                        <i class="fas fa-clock"></i> 比往年提前2天
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 图表容器 -->
+            <div class="chart-container">
+                <canvas id="yieldPredictionChart"></canvas>
+            </div>
+            <div class="analysis-note">
+                <p><strong>预测说明：</strong>图表展示不同种植面积下的小麦总产量预测，包含理想气候（高产）、平均气候（中产）和恶劣气候（低产）三种情景模拟，预测基于历史亩产数据和气候影响系数。</p >
+            </div>
+        </div>
+    </div>
+     <script>
+        // 预测数据：种植面积（亩）与对应总产量（吨）
+        const areaData = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500];
+        
+        // 不同气候条件下的总产量预测
+        const highYield = areaData.map(area => Math.round(area * 0.65 * 10) / 10); // 理想气候（亩产~650斤）
+        const mediumYield = areaData.map(area => Math.round(area * 0.5 * 10) / 10); // 平均气候（亩产~500斤）
+        const lowYield = areaData.map(area => Math.round(area * 0.35 * 10) / 10); // 恶劣气候（亩产~350斤）
+
+        // 创建图表
+        const ctx = document.getElementById('yieldPredictionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: areaData,
+                datasets: [
+                    {
+                        label: '理想气候（高产）',
+                        data: highYield,
+                        borderColor: 'rgba(46, 204, 113, 1)',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'rgba(46, 204, 113, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    },
+                     {
+                        label: '平均气候（中产）',
+                        data: mediumYield,
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    },
+                    {
+                        label: '恶劣气候（低产）',
+                        data: lowYield,
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'rgba(231, 76, 60, 1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                animation: {
+                    duration: 1800,
+                    easing: 'easeOutCubic'
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: '种植面积（亩）',
+                            font: { weight: 'bold', size: 12 }
+                        },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: '预测总产量（吨）',
+                            font: { weight: 'bold', size: 12 }
+                        },
+                        min: 0,
+                        ticks: { stepSize: 50 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(255,255,255,0.95)',
+                        titleColor: '#2c3e50',
+                        bodyColor: '#34495e',
+                        borderColor: '#ddd',
+                        borderWidth: 1,
+                        padding: 10,
+                        callbacks: {
+                            title: function(context) {
+                                return `种植面积: $
+                           {context[0].label} 亩`;
+                            },
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y} 吨`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 当选择小麦时显示图表
+        document.getElementById('crop-type').addEventListener('change', function() {
+            const chartContainer = document.querySelector('.chart-container');
+            if (this.value === 'wheat') {
+                chartContainer.innerHTML = '<canvas id="yieldPredictionChart"></canvas>';
+                     // 重新初始化图表
+                const ctx = document.getElementById('yieldPredictionChart').getContext('2d');
+                new Chart(ctx, {
+                    // ... 同上图表配置 ...
+                    type: 'line',
+                    data: {
+                        labels: areaData,
+                        datasets: [
+                            {
+                                label: '理想气候（高产）',
+                                data: highYield,
+                                borderColor: 'rgba(46, 204, 113, 1)',
+                                backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true,
+                                pointBackgroundColor: 'rgba(46, 204, 113, 1)',
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            },
+                            { 
+                               label: '平均气候（中产）',
+                                data: mediumYield,
+                                borderColor: 'rgba(52, 152, 219, 1)',
+                                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true,
+                                pointBackgroundColor: 'rgba(52, 152, 219, 1)',
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            },
+                            {
+                                label: '恶劣气候（低产）',
+                                data: lowYield,
+                                borderColor: 'rgba(231, 76, 60, 1)',
+                                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                borderWidth: 2,
+                                tension: 0.3,
+                                fill: true,
+                                pointBackgroundColor: 'rgba(231, 76, 60, 1)',
+                                pointRadius: 5,
+                                pointHoverRadius: 7
+                            }
+                        ]
+                    },
+                        options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        animation: {
+                            duration: 1800,
+                            easing: 'easeOutCubic'
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '种植面积（亩）',
+                                    font: { weight: 'bold', size: 12 }
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: '预测总产量（吨）',
+                                    font: { weight: 'bold', size: 12 }
+                                },
+                                min: 0,
+                                ticks: { stepSize: 50 },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    boxWidth: 15,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                              backgroundColor: 'rgba(255,255,255,0.95)',
+                                titleColor: '#2c3e50',
+                                bodyColor: '#34495e',
+                                borderColor: '#ddd',
+                                borderWidth: 1,
+                                padding: 10,
+                                callbacks: {
+                                    title: function(context) {
+                                        return `种植面积: ${context[0].label} 亩`;
+                                    },
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y} 吨`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                chartContainer.innerHTML = '[选择其他作物将显示相应预测图表]';
+            }
+        });
+    </script>
+</body>
+</html>   

@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农业大数据智能分析预警系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background: linear-gradient(to right, #2E7D32, #4CAF50);
+            color: white;
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-left: 25px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .nav-links a:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+        
+        .nav-links i {
+            margin-right: 5px;
+            font-size: 16px;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-profile img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        /* 主内容区域 */
+        .container {
+            margin-top: 60px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: calc(100vh - 60px);
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-right: 20px;
+            height: fit-content;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #555;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: #f0f7f1;
+            color: #2E7D32;
+            border-left: 3px solid #4CAF50;
+        }
+        
+        .sidebar-menu i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        
+        /* 主面板 */
+        .main-content {
+            display: grid;
+            grid-gap: 20px;
+        }
+        
+        /* 数据概览卡片 */
+        .overview-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-gap: 20px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .card-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2E7D32;
+            margin: 5px 0;
+        }
+        
+        .card-change {
+            font-size: 12px;
+            color: #4CAF50;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-change.negative {
+            color: #f44336;
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: #e8f5e9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2E7D32;
+        }
+        
+        /* 图表区域 */
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .chart-actions {
+            display: flex;
+        }
+        
+        .chart-actions select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 10px;
+            outline: none;
+        }
+        
+        /* 预警信息 */
+        .alert-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .alert-item {
+            display: flex;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+        
+        .alert-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #ffebee;
+            color: #f44336;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .alert-icon.warning {
+            background-color: #fff8e1;
+            color: #ffa000;
+        }
+        
+        .alert-icon.info {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .alert-content {
+            flex-grow: 1;
+        }
+        
+        .alert-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+        
+        .alert-desc {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .alert-time {
+            font-size: 11px;
+            color: #999;
+            text-align: right;
+            min-width: 70px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                margin-right: 0;
+                margin-bottom: 20px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .overview-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links li {
+                margin-left: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/3069/3069172.png" alt="农业大数据">
+            <h1>农业大数据智能分析预警系统</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#"><i class="fas fa-home"></i>首页</a></li>
+            <li><a href="#"><i class="fas fa-chart-line"></i>数据分析</a></li>
+            <li><a href="#"><i class="fas fa-bell"></i>预警中心</a></li>
+            <li><a href="#"><i class="fas fa-cog"></i>系统设置</a></li>
+        </ul>
+        <div class="user-profile">
+            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="用户头像">
+            <span>管理员</span>
+        </div>
+    </nav>
+    
+    <!-- 主内容区域 -->
+    <div class="container">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#" class="active"><i class="fas fa-tachometer-alt"></i>数据概览</a></li>
+               <li><a href="产量预测.html"><i class="fas fa-chart-pie"></i>产量预测</a></li>
+                <li><a href="地理信息.html"><i class="fas fa-map-marked-alt"></i>地理信息</a></li>
+            </ul>
+        </aside>
+        
+        <!-- 主面板 -->
+        <main class="main-content">
+            <!-- 数据概览卡片 -->
+            <section class="overview-cards">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">监测农田面积</div>
+                            <div class="card-value">12,568 亩</div>
+                            <div class="card-change"><i class="fas fa-caret-up"></i> 5.2% 同比</div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">当前作物长势</div>
+                            <div class="card-value">良好</div>
+                            <div class="card-change negative"><i class="fas fa-caret-down"></i> 2.1% 环比</div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">土壤墒情指数</div>
+                            <div class="card-value">78.5</div>
+                            <div class="card-change"><i class="fas fa-caret-up"></i> 3.7% 环比</div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">今日预警信息</div>
+                            <div class="card-value">3 条</div>
+                            <div class="card-change negative"><i class="fas fa-caret-up"></i> 1 条新增</div>
+                        </div>
+                        <div class="card-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 作物生长趋势图表 -->
+            <section class="chart-container">
+                <div class="chart-header">
+                    <h2 class="chart-title">主要作物生长趋势分析</h2>
+                    <div class="chart-actions">
+                        <select id="crop-select">
+                        <option value="wheat">小麦</option>
+                        <option value="corn">玉米</option>
+                        <option value="rice">水稻</option>
+                        <option value="soybean">大豆</option>
+                    </select>
+                    <select id="time-select">
+                        <option value="7">近7天</option>
+                        <option value="15">近15天</option>
+                        <option value="30">近30天</option>
+                        <option value="365">全年</option>
+                    </select>
+                </div>
+                </div>
+            <div class="chart-wrapper">
+                <div id="growth-trend-chart" style="height: 400px; background-color: #f9f9f9; display: flex; 
+         align-items: center; justify-content: center; color: #999; border-radius: 4px;">
+        [此处为作物生长趋势图表] <!-- 初始化后会被ECharts替换 -->
+                </div>
+        </div>
+            </section>
+            
+            <!-- 气象数据与预警信息 -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 20px;">
+                <section class="chart-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">气象数据监测</h2>
+                        <div class="chart-actions">
+                            <select id="metric-select" style="margin-top: 10px;">
+                             <option value="temperature">温度</option>
+                             <option value="humidity">湿度</option>
+                              <option value="rainfall">降雨量</option>
+                              <option value="sunlight">光照</option>
+                             </select>
+                        </div>
+                    </div>
+                     <div class="chart-wrapper">
+                     </div>
+                    <div id="weather-trend-chart" style="height: 250px; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center; color: #999; border-radius: 4px;">
+                        [此处为气象数据图表] <!-- 初始化后会被ECharts替换 -->
+                    </div>
+                </section>
+                
+                <section class="alert-container">
+                    <div class="chart-header">
+                        <h2 class="chart-title">最新预警信息</h2>
+                        <div class="chart-actions">
+                            <select>
+                                <option>全部</option>
+                                <option>病虫害</option>
+                                <option>气象</option>
+                                <option>土壤</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="alert-list">
+                        <div class="alert-item">
+                            <div class="alert-icon warning">
+                                <i class="fas fa-exclamation"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">小麦条锈病预警</div>
+                                <div class="alert-desc">A3区域检测到小麦条锈病早期症状，建议立即防治</div>
+                            </div>
+                            <div class="alert-time">10:25</div>
+                        </div>
+                        <div class="alert-item">
+                            <div class="alert-icon">
+                                <i class="fas fa-exclamation"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">土壤墒情不足</div>
+                                <div class="alert-desc">B2区域土壤湿度低于临界值，建议灌溉</div>
+                            </div>
+                            <div class="alert-time">今日</div>
+                        </div>
+                        <div class="alert-item">
+                            <div class="alert-icon info">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="alert-content">
+                                <div class="alert-title">强降雨预报</div>
+                                <div class="alert-desc">预计未来48小时将有强降雨，请做好排水准备</div>
+                            </div>
+                            <div class="alert-time">昨日</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+           <script>
+        // 初始化图表
+        const chartDom = document.getElementById('growth-trend-chart');
+        const myChart = echarts.init(chartDom);
+        
+        // 实际作物生长数据（基于您提供的图片中的信息）
+        const cropData = {
+            wheat: {
+                name: "小麦",
+                color: "#f39c12",
+                data: {
+                    // 近7天数据
+                    7: {
+                        dates: ['6月1日', '6月2日', '6月3日', '6月4日', '6月5日', '6月6日', '6月7日'],
+                        height: [15.2, 15.5, 15.8, 16.1, 16.3, 16.6, 16.8], // 株高(cm)
+                        leaf: [4.2, 4.3, 4.5, 4.6, 4.7, 4.8, 4.9], // 叶片数
+                        health: [92, 92, 93, 93, 94, 94, 95] // 健康指数
+                    },
+                }
+            },
+            corn: {
+                name: "玉米",
+                color: "#2ecc71",
+                data: {
+                    7: {
+                        dates: ['6月1日', '6月2日', '6月3日', '6月4日', '6月5日', '6月6日', '6月7日'],
+                        height: [45.1, 45.8, 46.5, 47.2, 47.8, 48.4, 49.0],
+                        leaf: [8.2, 8.3, 8.5, 8.6, 8.7, 8.8, 8.9],
+                        health: [88, 88, 89, 89, 90, 90, 91]
+                    },
+                }
+            }
+        };
+ // 更新图表函数
+        function updateChart() {
+            const crop = document.getElementById('crop-select').value;
+            const days = parseInt(document.getElementById('time-select').value);
+            
+            // 获取当前作物的数据
+            const currentCrop = cropData[crop] || cropData.wheat;
+            const chartData = currentCrop.data[days] || currentCrop.data[7];
+            
+            // 设置图表选项
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        crossStyle: {
+                            color: '#999'
+                        }
+                    },
+                    formatter: function(params) {
+                        let result = `<div style="font-weight:bold;margin-bottom:5px">${params[0].axisValue}</div>`;
+                        params.forEach(item => {
+                            let unit = '';
+                            if (item.seriesName.includes('株高')) unit = 'cm';
+                            if (item.seriesName.includes('健康')) unit = '分';
+                            result += `
+                                <div style="display:flex;align-items:center;margin:3px 0">
+                                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${item.color};margin-right:5px"></span>
+                                    ${item.seriesName}: <b>${item.value}${unit}</b>
+                                </div>
+                            `;
+                        });
+                        return result;
+                    }
+                },
+                legend: {
+                    data: ['株高(cm)', '叶片数', '健康指数'],
+                    right: 10,
+                    top: 10,
+                    textStyle: {
+                        fontSize: 12
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: chartData.dates,
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    axisLabel: {
+                        interval: Math.max(Math.ceil(chartData.dates.length/7) - 1, 0),
+                        fontSize: 12
+                    }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '株高(cm)',
+                        min: 0,
+                        axisLabel: {
+                            formatter: '{value}'
+                        },
+                        splitLine: {
+                            lineStyle: {
+                                type: 'dashed'
+                            }
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '叶片数/健康指数',
+                        min: 0,
+                        axisLabel: {
+                            formatter: '{value}'
+                        },
+                        splitLine: {
+                            show: false
+                        }
+                    }
+                ],
+                series: [
+                    {
+                        name: '株高(cm)',
+                        type: 'bar',
+                        barWidth: '60%',
+                        data: chartData.height,
+                        itemStyle: {
+                            color: currentCrop.color
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c}cm',
+                            fontSize: 10
+                        }
+                    },
+                    {
+                        name: '叶片数',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: chartData.leaf,
+                        symbol: 'circle',
+                        symbolSize: 8,
+                        itemStyle: {
+                            color: '#3498db'
+                        },
+                        lineStyle: {
+                            width: 3
+                        }
+                    },
+                    {
+                        name: '健康指数',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        data: chartData.health,
+                        symbol: 'diamond',
+                        symbolSize: 10,
+                        itemStyle: {
+                            color: '#e74c3c'
+                        },
+                        lineStyle: {
+                            width: 3,
+                            type: 'dashed'
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: '{c}分',
+                            fontSize: 10
+                        }
+                    }
+                ]
+            };
+            
+            // 应用配置
+            myChart.setOption(option, true);
+        }
+        
+        // 监听选择框变化
+        document.getElementById('crop-select').addEventListener('change', updateChart);
+        document.getElementById('time-select').addEventListener('change', updateChart);
+        
+        // 窗口大小变化时重新调整图表大小
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+        
+        // 标签切换
+        document.querySelectorAll('.trend-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.trend-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                // 这里可以添加切换不同图表的逻辑
+            });
+        });
+        
+        // 初始加载图表
+        updateChart();
+        </script>
+    <script>
+    // 气象图表
+    const weatherChart = echarts.init(document.getElementById('weather-trend-chart'));
+    
+    // 气象数据
+    const weatherData = {
+        temperature: {
+            name: "温度",
+            color: "#e74c3c",
+            unit: "℃",
+            data: {
+                dates: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                maxtemp: [28.5, 30.1, 29.3, 27.0, 26.7, 25.8, 24.9],
+                mintemp: [18.5, 19.1, 20.3, 19.0, 18.7, 17.8, 16.9],
+                avgtemp: [23.5, 24.6, 24.8, 23.0, 22.7, 21.8, 20.9]
+            }
+        },
+        humidity: {
+            name: "湿度",
+            color: "#3498db",
+            unit: "%",
+            data: {
+                dates: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                maxtemp: [85, 82, 78, 75, 80, 83, 88],
+                mintemp: [45, 50, 48, 42, 40, 38, 35],
+                avgtemp: [65, 66, 63, 58, 60, 60, 61]
+            }
+        },
+        rainfall: {
+            name: "降雨量",
+            color: "#2ecc71",
+            unit: "mm",
+            data: {
+                dates: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                maxtemp: [12.5, 15.1, 8.3, 5.0, 3.7, 2.8, 0.9],
+                mintemp: [0.5, 1.1, 0.3, 0, 0, 0, 0],
+                avgtemp: [6.5, 8.1, 4.3, 2.5, 1.8, 1.4, 0.4]
+            }
+        },
+        sunlight: {
+            name: "光照",
+            color: "#f39c12",
+            unit: "h",
+            data: {
+                dates: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                maxtemp: [12, 11, 10, 9, 8, 7, 6],
+                mintemp: [4, 5, 6, 5, 4, 3, 2],
+                avgtemp: [8, 8, 8, 7, 6, 5, 4]
+            }
+        }
+    };
+
+    // 更新图表函数
+    function updateChart() {
+        const metric = document.getElementById('metric-select').value;
+        const currentMetric = weatherData[metric] || weatherData.temperature;
+        
+        // 设置图表选项
+        const weatherOption = {
+            backgroundColor: '#f9f9f9',
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'cross',
+                    crossStyle: {
+                        color: '#999'
+                    }
+                },
+                formatter: function(params) {
+                    let result = `<div style="font-weight:bold;margin-bottom:5px">${params[0].axisValue}</div>`;
+                    params.forEach(item => {
+                        result += `
+                            <div style="display:flex;align-items:center;margin:3px 0">
+                                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${item.color};margin-right:5px"></span>
+                                ${item.seriesName}: <b>${item.value}${currentMetric.unit}</b>
+                            </div>
+                        `;
+                    });
+                    return result;
+                }
+            },
+            legend: {
+                data: ['最高' + currentMetric.name, '平均' + currentMetric.name, '最低' + currentMetric.name],
+                right: 10,
+                top: 10,
+                textStyle: {
+                    fontSize: 12
+                }
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                top: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: currentMetric.data.dates,
+                axisLabel: {
+                    fontSize: 10,
+                    color: '#666'
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#ddd'
+                    }
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: currentMetric.name + `(${currentMetric.unit})`,
+                nameTextStyle: {
+                    color: '#666'
+                },
+                axisLabel: {
+                    formatter: '{value}',
+                    fontSize: 10,
+                    color: '#666'
+                },
+                axisLine: {
+                    lineStyle: {
+                        color: '#ddd'
+                    }
+                },
+                splitLine: {
+                    lineStyle: {
+                        type: 'dashed',
+                        color: '#eee'
+                    }
+                }
+            },
+            series: [
+                {
+                    name: '最高' + currentMetric.name,
+                    type: 'line',
+                    data: currentMetric.data.maxtemp,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    itemStyle: {
+                        color: currentMetric.color
+                    },
+                    lineStyle: {
+                        width: 2
+                    },
+                    label: {
+                        show: true,
+                        position: 'top',
+                        formatter: '{c}' + currentMetric.unit,
+                        fontSize: 10
+                    }
+                },
+                {
+                    name: '平均' + currentMetric.name,
+                    type: 'line',
+                    data: currentMetric.data.avgtemp,
+                    symbol: 'diamond',
+                    symbolSize: 8,
+                    itemStyle: {
+                        color: '#9b59b6'
+                    },
+                    lineStyle: {
+                        width: 2,
+                        type: 'dashed'
+                    }
+                },
+                {
+                    name: '最低' + currentMetric.name,
+                    type: 'line',
+                    data: currentMetric.data.mintemp,
+                    symbol: 'triangle',
+                    symbolSize: 8,
+                    itemStyle: {
+                        color: '#1abc9c'
+                    },
+                    lineStyle: {
+                        width: 2,
+                        type: 'dotted'
+                    }
+                }
+            ]
+        };
+        
+        // 应用配置
+        weatherChart.setOption(weatherOption);
+    }
+    
+    // 监听选择框变化
+    document.getElementById('metric-select')?.addEventListener('change', updateChart);
+    
+    // 窗口大小变化时重新调整图表大小
+    window.addEventListener('resize', function() {
+        weatherChart.resize();
+    });
+    
+    // 初始加载图表
+    updateChart();
+    </script>
+</body>
+</html>
